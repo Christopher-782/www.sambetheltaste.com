@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sambethel Taste Bakery | Admin Dashboard</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+    <link rel="stylesheet" href="adminDashboard.css" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <a href="#" class="logo">
+        <img
+          class="logo-icon"
+          src="https://res.cloudinary.com/deoqw88yb/image/upload/v1770563166/Copilot_20260208_160543_ksmmbp.png"
+          alt=""
+          height="200px"
+          width="200px"
+        />
+      </a>
+
+      <div class="sidebar-menu">
+        <div class="menu-label">Main</div>
+        <a href="#" class="menu-item active">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="menu-text">Orders</span>
+        </a>
+        <a href="product.html" class="menu-item">
+          <i class="fas fa-box"></i>
+          <span class="menu-text">Products</span>
+        </a>
+        <a href="#" class="menu-item">
+          <i class="fas fa-users"></i>
+          <span class="menu-text">Customers</span>
+        </a>
+
+        <div class="menu-label">Analytics</div>
+        <a href="#" class="menu-item"> </a>
+        <a href="report.html" class="menu-item">
+          <i class="fas fa-chart-pie"></i>
+          <span class="menu-text">Reports</span>
+        </a>
+
+        <div class="menu-label">Settings</div>
+
+        <a href="#" class="menu-item">
+          <i class="fas fa-cog"></i>
+          <span class="menu-text">Settings</span>
+        </a>
+        <a href="#" class="menu-item" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="menu-text">Logout</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Top Navigation -->
+      <div class="top-nav">
+        <div class="page-title">
+          <h1>Orders Management</h1>
+        </div>
+        <div>
+          <button
+            id="loadOrdersBtn"
+            style="
+              background-color: #ffa500;
+              color: #1b3a2f;
+              border: none;
+              padding: 8px 16px;
+              border-radius: 6px;
+              font-weight: bold;
+              cursor: pointer;
+              transition: 0.3s;
+            "
+            onmouseover="this.style.backgroundColor = '#e59400'"
+            onmouseout="this.style.backgroundColor = '#ffa500'"
+          >
+            Load Orders
+          </button>
+        </div>
+        <div class="user-info">
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div>
+            <div>Welcome Chris</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-icon total">
+            <i class="fas fa-shopping-cart"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Total Orders</h3>
+            <div class="number" id="totalOrders">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon pending">
+            <i class="fas fa-clock"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Pending Payment</h3>
+            <div class="number" id="pendingOrders">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon processing">
+            <i class="fas fa-cog"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Processing</h3>
+            <div class="number" id="processingOrders">0</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon completed">
+            <i class="fas fa-check-circle"></i>
+          </div>
+          <div class="stat-info">
+            <h3>Completed</h3>
+            <div class="number" id="completedOrders">0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="filters">
+        <div class="filter-group">
+          <label>Date Range</label>
+          <input type="date" id="dateFrom" class="form-control" />
+        </div>
+        <div class="filter-group">
+          <label>To</label>
+          <input type="date" id="dateTo" class="form-control" />
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <select id="statusFilter" class="form-control">
+            <option value="">All Status</option>
+            <option value="pending_payment">Pending Payment</option>
+            <option value="processing">Processing</option>
+            <option value="shipped">Shipped</option>
+            <option value="delivered">Delivered</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Search</label>
+          <input
+            type="text"
+            id="searchInput"
+            placeholder="Search orders..."
+            class="form-control"
+          />
+        </div>
+      </div>
+
+      <!-- Orders Table -->
+      <div class="orders-section">
+        <div class="section-header">
+          <h2>Recent Orders</h2>
+          <button class="btn btn-primary" onclick="exportOrders()">
+            <i class="fas fa-download"></i> Export
+          </button>
+        </div>
+
+        <div class="table-container">
+          <table class="orders-table">
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Products</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="ordersTableBody">
+              <!-- Orders will be loaded here -->
+              <tr>
+                <td colspan="7" class="text-center">Loading orders...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Charts Section -->
+      <!-- <div class="charts-section">
+        <div class="chart-card">
+          <h3>Orders Overview</h3>
+          <canvas id="ordersChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>Revenue Trend</h3>
+          <canvas id="revenueChart"></canvas>
+        </div>
+      </div> -->
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="orderModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Order Details</h3>
+          <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body" id="modalBody">
+          <!-- Order details will be loaded here -->
+        </div>
+      </div>
+    </div>
+    <script src="script.js"></script>
+  </body>
+</html>

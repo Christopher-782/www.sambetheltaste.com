@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Order Status Report</title>
+    <link rel="stylesheet" href="report.css" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1><i class="fas fa-chart-bar"></i> Order Status Report</h1>
+        <p class="subtitle">Total orders categorized by status</p>
+      </header>
+
+      <div class="controls">
+        <div class="date-filter">
+          <label for="dateRange"
+            ><i class="fas fa-calendar-alt"></i> Date Range:</label
+          >
+          <select id="dateRange">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+            <option value="quarter">This Quarter</option>
+            <option value="year">This Year</option>
+          </select>
+        </div>
+        <button id="refreshBtn" class="btn-refresh">
+          <i class="fas fa-sync-alt"></i> Refresh Data
+        </button>
+      </div>
+
+      <div class="dashboard">
+        <div class="summary-cards">
+          <!-- Cards will be dynamically generated -->
+        </div>
+
+        <div class="charts-container">
+          <div class="chart-box">
+            <h3><i class="fas fa-chart-pie"></i> Order Distribution</h3>
+            <div class="chart-wrapper">
+              <canvas id="orderChart"></canvas>
+            </div>
+          </div>
+
+          <div class="chart-box">
+            <h3><i class="fas fa-chart-line"></i> Order Value by Status</h3>
+            <div class="chart-wrapper">
+              <canvas id="valueChart"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <div class="detailed-report">
+          <h3><i class="fas fa-table"></i> Detailed Breakdown</h3>
+          <div class="table-container">
+            <table id="orderTable">
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Products</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- Data will be populated dynamically -->
+              </tbody>
+              <tfoot>
+                <tr id="totalRow">
+                  <td><strong>Total</strong></td>
+                  <td id="totalCount">0</td>
+                  <td id="totalValue">$0.00</td>
+                  <td id="avgValue">$0.00</td>
+                  <td id="totalPercentage">100%</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="export-section">
+        <button id="exportPdf" class="btn-export">
+          <i class="fas fa-file-pdf"></i> Export as PDF
+        </button>
+        <button id="exportCsv" class="btn-export">
+          <i class="fas fa-file-csv"></i> Export as CSV
+        </button>
+        <button id="printReport" class="btn-export">
+          <i class="fas fa-print"></i> Print Report
+        </button>
+      </div>
+
+      <footer>
+        <p>Report generated on: <span id="reportDate"></span></p>
+        <p class="note">
+          Data updates in real-time. Last refresh:
+          <span id="lastRefresh">Never</span>
+        </p>
+      </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="reportscript.js"></script>
+  </body>
+</html>

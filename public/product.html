@@ -1,0 +1,971 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sambethel Taste Bakery | Product Management</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+    <link rel="stylesheet" href="product.css" />
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  </head>
+  <body>
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <a href="#" class="logo">
+        <img
+          class="logo-icon"
+          src="https://res.cloudinary.com/deoqw88yb/image/upload/v1770563166/Copilot_20260208_160543_ksmmbp.png"
+          alt=""
+          height="200px"
+          width="200px"
+        />
+      </a>
+
+      <div class="sidebar-menu">
+        <div class="menu-label">Main</div>
+        <a href="admin.html" class="menu-item">
+          <i class="fas fa-shopping-cart"></i>
+          <span class="menu-text">Orders</span>
+        </a>
+
+        <a href="adminlogin.html" class="menu-item" id="logoutBtn">
+          <i class="fas fa-sign-out-alt"></i>
+          <span class="menu-text">Logout</span>
+        </a>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+      <!-- Top Navigation -->
+      <div class="top-nav">
+        <div class="page-title">
+          <h1>Product Management</h1>
+        </div>
+        <div class="user-info">
+          <div class="user-avatar">
+            <i class="fas fa-user"></i>
+          </div>
+          <div>
+            <div>Welcome</div>
+            <small>Chris</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button class="btn btn-primary" onclick="openAddProductModal()">
+          <i class="fas fa-plus"></i> Add New Product
+        </button>
+        <button class="btn btn-success" onclick="downloadTemplate()">
+          <i class="fas fa-download"></i> Download Template
+        </button>
+        <button class="btn btn-warning" onclick="exportProducts()">
+          <i class="fas fa-file-export"></i> Export Products
+        </button>
+        <button
+          class="btn btn-danger"
+          id="deleteSelectedBtn"
+          style="display: none"
+        >
+          <i class="fas fa-trash"></i> Delete Selected
+        </button>
+      </div>
+
+      <!-- Excel Upload Section -->
+      <div class="upload-card" id="uploadCard">
+        <div
+          class="upload-area"
+          onclick="document.getElementById('excelFile').click()"
+        >
+          <div class="upload-icon">
+            <i class="fas fa-file-excel"></i>
+          </div>
+          <div class="upload-text">
+            <h3>Upload Excel File</h3>
+            <p>
+              Click to upload or drag and drop Excel file (.xlsx, .xls, .csv)
+            </p>
+            <p><small>Max file size: 10MB</small></p>
+          </div>
+          <input
+            type="file"
+            id="excelFile"
+            class="file-input"
+            accept=".xlsx,.xls,.csv"
+            onchange="handleFileSelect(event)"
+          />
+        </div>
+
+        <div id="selectedFileInfo" style="display: none">
+          <div class="selected-file">
+            <div class="file-info">
+              <i class="fas fa-file-excel" style="color: #1d6f42"></i>
+              <div>
+                <div id="fileName"></div>
+                <div class="file-size" id="fileSize"></div>
+              </div>
+            </div>
+            <button class="btn btn-sm btn-primary" onclick="uploadExcel()">
+              <i class="fas fa-upload"></i> Upload
+            </button>
+          </div>
+          <div id="previewSection" style="margin-top: 15px"></div>
+        </div>
+
+        <div class="template-info">
+          <h4>Excel Template Requirements:</h4>
+          <ul>
+            <li>
+              Required columns:
+              <strong>name, category, price, stockQuantity</strong>
+            </li>
+            <li>Optional columns: description, imageUrl</li>
+            <li>First row should contain column headers</li>
+            <li>Price should be in numbers (e.g., 19.99)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Products Table -->
+      <div class="products-section">
+        <div class="section-header">
+          <h2>All Products <span id="productCount">(0)</span></h2>
+          <div>
+            <input
+              type="text"
+              id="searchProducts"
+              class="form-control"
+              placeholder="Search products..."
+              style="width: 250px"
+            />
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table class="products-table">
+            <thead>
+              <tr>
+                <th style="width: 40px">
+                  <input type="checkbox" id="selectAll" />
+                </th>
+                <th style="width: 80px">Image</th>
+                <th>Product Name</th>
+                <th>Category</th>
+                <th>Price</th>
+              </tr>
+            </thead>
+            <tbody id="productsTableBody">
+              <tr>
+                <td colspan="8" class="text-center">Loading products...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="pagination" id="pagination">
+          <!-- Pagination buttons will be generated here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Add/Edit Product Modal -->
+    <div id="productModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 id="modalTitle">Add New Product</h3>
+          <button class="close-btn" onclick="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form id="productForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Product Name *</label>
+                <input
+                  type="text"
+                  id="productName"
+                  class="form-control"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label>Category *</label>
+                <select id="productCategory" class="form-control" required>
+                  <option value="">Select Category</option>
+                  <option value="bread">Bread</option>
+                  <option value="Snacks">Bread</option>
+                  <option value="parfait">Pastry</option>
+                  <option value="cakes">Cake</option>
+                  <option value="juice">Cookie</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Price (₦) *</label>
+                <input
+                  type="number"
+                  id="productPrice"
+                  class="form-control"
+                  step="0.01"
+                  min="0"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label>Discount (%)</label>
+                <input
+                  type="number"
+                  id="productDiscount"
+                  class="form-control"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>Image URL</label>
+              <input
+                type="text"
+                id="productImage"
+                class="form-control"
+                placeholder="https://example.com/image.jpg"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Description</label>
+              <textarea
+                id="productDescription"
+                class="form-control"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px">
+              <button
+                type="button"
+                class="btn btn-primary"
+                style="flex: 1"
+                onclick="saveProduct()"
+              >
+                Save Product
+              </button>
+              <button
+                type="button"
+                class="btn"
+                style="flex: 1; background: var(--border)"
+                onclick="closeModal()"
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="deleteModal" class="modal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>Confirm Delete</h3>
+          <button class="close-btn" onclick="closeDeleteModal()">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <p id="deleteMessage">
+            Are you sure you want to delete this product?
+          </p>
+          <div style="display: flex; gap: 10px; margin-top: 20px">
+            <button
+              class="btn btn-danger"
+              style="flex: 1"
+              onclick="confirmDelete()"
+            >
+              Delete
+            </button>
+            <button
+              class="btn"
+              style="flex: 1; background: var(--border)"
+              onclick="closeDeleteModal()"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Global variables
+      let products = [];
+      let currentPage = 1;
+      let itemsPerPage = 10;
+      let selectedProducts = [];
+      let currentProductId = null;
+      let excelData = null;
+
+      // Setup event listeners
+      function setupEventListeners() {
+        // Search functionality
+        document
+          .getElementById("searchProducts")
+          .addEventListener("input", function (e) {
+            const searchTerm = e.target.value.toLowerCase();
+            filterProducts(searchTerm);
+          });
+
+        // Select all checkbox
+        document
+          .getElementById("selectAll")
+          .addEventListener("change", function (e) {
+            const checkboxes = document.querySelectorAll(".product-checkbox");
+            checkboxes.forEach((cb) => {
+              cb.checked = e.target.checked;
+              if (e.target.checked) {
+                selectedProducts.push(cb.value);
+              } else {
+                selectedProducts = [];
+              }
+            });
+            updateDeleteButton();
+          });
+
+        // Delete selected button
+        document
+          .getElementById("deleteSelectedBtn")
+          .addEventListener("click", function () {
+            if (selectedProducts.length > 0) {
+              showDeleteModal(selectedProducts);
+            }
+          });
+
+        // Drag and drop for file upload
+        const uploadCard = document.getElementById("uploadCard");
+        uploadCard.addEventListener("dragover", function (e) {
+          e.preventDefault();
+          uploadCard.classList.add("highlight");
+        });
+
+        uploadCard.addEventListener("dragleave", function () {
+          uploadCard.classList.remove("highlight");
+        });
+
+        uploadCard.addEventListener("drop", function (e) {
+          e.preventDefault();
+          uploadCard.classList.remove("highlight");
+          if (e.dataTransfer.files.length) {
+            handleFileSelect({ target: { files: e.dataTransfer.files } });
+          }
+        });
+
+        // Logout
+        document
+          .getElementById("logoutBtn")
+          .addEventListener("click", function (e) {
+            e.preventDefault();
+            localStorage.removeItem("token");
+            localStorage.removeItem("currentUser");
+            window.location.href = "login.html";
+          });
+      }
+
+      // Load products from API
+      async function loadProducts() {
+        try {
+          const response = await axios.get("/upload-products", {});
+
+          if (response.data && response.data.products) {
+            products = response.data.products;
+            displayProducts();
+          }
+        } catch (error) {
+          console.error("Error loading products:", error);
+          // For demo purposes, use mock data
+          generateMockProducts();
+          displayProducts();
+        }
+      }
+
+      // Generate mock products for demo
+      function generateMockProducts() {
+        const categories = [
+          "Bread",
+          "Pastry",
+          "Cake",
+          "Cookie",
+          "Muffin",
+          "Pie",
+          "Donut",
+        ];
+        const statuses = [
+          "active",
+          "active",
+          "active",
+          "outofstock",
+          "inactive",
+        ];
+
+        products = Array.from({ length: 25 }, (_, i) => ({
+          _id: `PROD${1000 + i}`,
+          name: `${categories[i % categories.length]} ${i + 1}`,
+          description: `Delicious ${categories[i % categories.length].toLowerCase()} made with premium ingredients`,
+          category: categories[i % categories.length],
+          price: parseFloat((Math.random() * 30 + 5).toFixed(2)),
+          imageUrl:
+            Math.random() > 0.5
+              ? `https://source.unsplash.com/200x200/?${categories[i % categories.length].toLowerCase()}`
+              : null,
+          createdAt: new Date().toISOString(),
+        }));
+      }
+
+      // Display products in table
+      function displayProducts() {
+        const tbody = document.getElementById("productsTableBody");
+        const paginationDiv = document.getElementById("pagination");
+
+        if (products.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="8" class="text-center">No products found</td></tr>';
+          paginationDiv.innerHTML = "";
+          return;
+        }
+
+        // Calculate pagination
+        const totalPages = Math.ceil(products.length / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const pageProducts = products.slice(startIndex, endIndex);
+
+        // Update product count
+        document.getElementById("productCount").textContent =
+          `(${products.length})`;
+
+        // Clear table
+        tbody.innerHTML = "";
+
+        // Add products to table
+        pageProducts.forEach((product) => {
+          const row = document.createElement("tr");
+
+          // Format price with discount
+          let priceDisplay = `$${product.price.toFixed(2)}`;
+          if (product.discount > 0) {
+            const discountedPrice =
+              product.price * (1 - product.discount / 100);
+            priceDisplay = `
+                        <div>
+                            <span style="text-decoration: line-through; color: var(--gray);">
+                                $${product.price.toFixed(2)}
+                            </span>
+                            <br>
+                            <span style="color: var(--success); font-weight: 600;">
+                                $${discountedPrice.toFixed(2)}
+                            </span>
+                            <span style="color: var(--danger); font-size: 12px;">
+                                (${product.discount}% off)
+                            </span>
+                        </div>
+                    `;
+          }
+
+          // Get status badge
+          const statusClass = `status-${product.status}`;
+          const statusText = product.status.replace(
+            "outofstock",
+            "Out of Stock",
+          );
+
+          row.innerHTML = `
+                    <td>
+                        <input type="checkbox" class="product-checkbox" value="${product._id}" onchange="toggleProductSelection(this)">
+                    </td>
+                    <td>
+                        ${
+                          product.imageUrl
+                            ? `<img src="${product.imageUrl}" alt="${product.name}" class="product-image">`
+                            : `<div class="product-image"><i class="fas fa-image"></i></div>`
+                        }
+                    </td>
+                    <td>
+                        <div style="font-weight: 600;">${product.name}</div>
+                        <small style="color: var(--gray);">${product.description ? product.description.substring(0, 50) + "..." : "No description"}</small>
+                    </td>
+                    <td>${product.category}</td>
+                    <td>${priceDisplay}</td>
+                    <td>
+                    </td>
+                    <td><span class="status-badge ${statusClass}">${statusText}</span></td>
+                    <td>
+                        <div class="action-buttons">
+                            <button class="btn btn-sm btn-edit" onclick="editProduct('${product._id}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-sm btn-delete" onclick="showDeleteModal(['${product._id}'])">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                `;
+
+          tbody.appendChild(row);
+        });
+
+        // Generate pagination buttons
+        generatePagination(totalPages);
+      }
+
+      // Generate pagination buttons
+      function generatePagination(totalPages) {
+        const paginationDiv = document.getElementById("pagination");
+        paginationDiv.innerHTML = "";
+
+        // Previous button
+        const prevBtn = document.createElement("button");
+        prevBtn.className = "pagination-btn";
+        prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevBtn.disabled = currentPage === 1;
+        prevBtn.onclick = () => {
+          if (currentPage > 1) {
+            currentPage--;
+            displayProducts();
+          }
+        };
+        paginationDiv.appendChild(prevBtn);
+
+        // Page numbers
+        for (let i = 1; i <= totalPages; i++) {
+          const pageBtn = document.createElement("button");
+          pageBtn.className = `pagination-btn ${i === currentPage ? "active" : ""}`;
+          pageBtn.textContent = i;
+          pageBtn.onclick = () => {
+            currentPage = i;
+            displayProducts();
+          };
+          paginationDiv.appendChild(pageBtn);
+        }
+
+        // Next button
+        const nextBtn = document.createElement("button");
+        nextBtn.className = "pagination-btn";
+        nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextBtn.disabled = currentPage === totalPages;
+        nextBtn.onclick = () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            displayProducts();
+          }
+        };
+        paginationDiv.appendChild(nextBtn);
+      }
+
+      // Filter products by search term
+      function filterProducts(searchTerm) {
+        if (!searchTerm) {
+          displayProducts();
+          return;
+        }
+
+        const filtered = products.filter(
+          (product) =>
+            product.name.toLowerCase().includes(searchTerm) ||
+            product.category.toLowerCase().includes(searchTerm) ||
+            (product.description &&
+              product.description.toLowerCase().includes(searchTerm)),
+        );
+
+        // Create a copy for display
+        const tempProducts = [...filtered];
+        const tbody = document.getElementById("productsTableBody");
+
+        if (tempProducts.length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="8" class="text-center">No matching products found</td></tr>';
+          document.getElementById("pagination").innerHTML = "";
+          return;
+        }
+
+        // Display filtered products (without pagination)
+        tbody.innerHTML = "";
+        tempProducts.forEach((product) => {
+          const row = document.createElement("tr");
+          // Similar row creation as in displayProducts()
+          // ... (simplified for brevity)
+          row.innerHTML = `
+                    <td><input type="checkbox" class="product-checkbox" value="${product._id}"></td>
+                    <td>${product.imageUrl ? `<img src="${product.imageUrl}" class="product-image">` : '<div class="product-image"><i class="fas fa-image"></i></div>'}</td>
+                    <td>${product.name}</td>
+                    <td>${product.category}</td>
+                    <td>$${product.price.toFixed(2)}</td>
+                    <td>
+                        <button class="btn btn-sm btn-edit" onclick="editProduct('${product._id}')">Edit</button>
+                        <button class="btn btn-sm btn-delete" onclick="showDeleteModal(['${product._id}'])">Delete</button>
+                    </td>
+                `;
+          tbody.appendChild(row);
+        });
+
+        document.getElementById("pagination").innerHTML = "";
+      }
+
+      // Handle Excel file selection
+      function handleFileSelect(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Check file type
+        const validTypes = [
+          "application/vnd.ms-excel",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "text/csv",
+        ];
+        if (
+          !validTypes.includes(file.type) &&
+          !file.name.match(/\.(xlsx|xls|csv)$/)
+        ) {
+          alert("Please select a valid Excel or CSV file");
+          return;
+        }
+
+        // Check file size (max 10MB)
+        if (file.size > 10 * 1024 * 1024) {
+          alert("File size must be less than 10MB");
+          return;
+        }
+
+        // Show file info
+        document.getElementById("selectedFileInfo").style.display = "block";
+        document.getElementById("fileName").textContent = file.name;
+        document.getElementById("fileSize").textContent = formatFileSize(
+          file.size,
+        );
+
+        // Read and preview file
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: "array" });
+            const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+            excelData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+            previewExcelData(excelData);
+          } catch (error) {
+            console.error("Error reading Excel file:", error);
+            alert("Error reading Excel file. Please check the format.");
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      }
+
+      // Preview Excel data
+      function previewExcelData(data) {
+        const previewSection = document.getElementById("previewSection");
+
+        if (!data || data.length < 2) {
+          previewSection.innerHTML =
+            '<p style="color: var(--danger);">No data found in the file</p>';
+          return;
+        }
+
+        let previewHTML = "<h4>Preview (first 5 rows):</h4>";
+        previewHTML += '<table class="preview-table">';
+
+        // Headers
+        previewHTML += "<tr>";
+        data[0].forEach((header) => {
+          previewHTML += `<th>${header || ""}</th>`;
+        });
+        previewHTML += "</tr>";
+
+        // First 5 data rows
+        for (let i = 1; i < Math.min(6, data.length); i++) {
+          previewHTML += "<tr>";
+          data[i].forEach((cell) => {
+            previewHTML += `<td>${cell || ""}</td>`;
+          });
+          previewHTML += "</tr>";
+        }
+
+        previewHTML += "</table>";
+        previewHTML += `<p>Total rows: ${data.length - 1}</p>`;
+
+        previewSection.innerHTML = previewHTML;
+      }
+
+      // Format file size
+      function formatFileSize(bytes) {
+        if (bytes === 0) return "0 Bytes";
+        const k = 1024;
+        const sizes = ["Bytes", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+      }
+
+      // Upload Excel file
+      async function uploadExcel() {
+        if (!excelData) {
+          alert("Please select a file first");
+          return;
+        }
+
+        const fileInput = document.getElementById("excelFile");
+        const file = fileInput.files[0];
+
+        if (!file) {
+          alert("Please select a file");
+          return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          await axios.post("/upload-products", formData, {
+            headers: { "Content-Type": "multipart/form-data" },
+          });
+
+          alert("Products uploaded successfully!");
+        } catch (error) {
+          console.error(error);
+          alert("Upload failed");
+        }
+      }
+
+      // Reset upload form
+      function resetUploadForm() {
+        document.getElementById("selectedFileInfo").style.display = "none";
+        document.getElementById("previewSection").innerHTML = "";
+        document.getElementById("excelFile").value = "";
+        excelData = null;
+      }
+
+      // Download Excel template
+      function downloadTemplate() {
+        // Create sample data
+        const templateData = [
+          ["id", "name", "price", "category", "image", "description"],
+        ];
+
+        // Create worksheet
+        const ws = XLSX.utils.aoa_to_sheet(templateData);
+
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Products Template");
+
+        // Generate Excel file
+        XLSX.writeFile(wb, "product_template.xlsx");
+      }
+
+      // Export products to Excel
+      function exportProducts() {
+        // Prepare data for export
+        const exportData = products.map((product) => ({
+          "Product ID": product._id,
+          Name: product.name,
+          Category: product.category,
+          Price: product.price,
+          image: product.imageUrl,
+          Description: product.description || "",
+        }));
+
+        // Create worksheet
+        const ws = XLSX.utils.json_to_sheet(exportData);
+
+        // Create workbook
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Products");
+
+        // Generate Excel file
+        XLSX.writeFile(
+          wb,
+          `products_export_${new Date().toISOString().split("T")[0]}.xlsx`,
+        );
+      }
+
+      // Open add product modal
+      function openAddProductModal() {
+        document.getElementById("modalTitle").textContent = "Add New Product";
+        document.getElementById("productForm").reset();
+        currentProductId = null;
+        document.getElementById("productModal").style.display = "flex";
+      }
+
+      // Edit product
+      function editProduct(productId) {
+        const product = products.find((p) => p._id === productId);
+        if (!product) return;
+
+        currentProductId = productId;
+        document.getElementById("modalTitle").textContent = "Edit Product";
+
+        // Fill form with product data
+        document.getElementById("productName").value = product.name;
+        document.getElementById("productCategory").value = product.category;
+        document.getElementById("productPrice").value = product.price;
+        document.getElementById("productImage").value = product.imageUrl || "";
+        document.getElementById("productDescription").value =
+          product.description || "";
+
+        document.getElementById("productModal").style.display = "flex";
+      }
+
+      // Save product
+      async function saveProduct() {
+        const productData = {
+          name: document.getElementById("productName").value,
+          category: document.getElementById("productCategory").value,
+          price: parseFloat(document.getElementById("productPrice").value),
+          imageUrl: document.getElementById("productImage").value || null,
+          description: document.getElementById("productDescription").value,
+        };
+
+        // Validation
+        if (!productData.name || !productData.category || !productData.price) {
+          alert("Please fill in all required fields with valid values");
+          return;
+        }
+
+        try {
+          let response;
+
+          if (currentProductId) {
+            // Update existing product
+            response = await axios.put(
+              `/api/products/${currentProductId}`,
+              productData,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  "Content-Type": "application/json",
+                },
+              },
+            );
+          } else {
+            // Create new product
+            response = await axios.post("/api/products", productData);
+          }
+
+          alert(
+            currentProductId
+              ? "Product updated successfully!"
+              : "Product added successfully!",
+          );
+          closeModal();
+          loadProducts(); // Refresh list
+        } catch (error) {
+          console.error("Error saving product:", error);
+          alert(
+            "Error saving product: " +
+              (error.response?.data?.message || error.message),
+          );
+        }
+      }
+
+      // Toggle product selection
+      function toggleProductSelection(checkbox) {
+        if (checkbox.checked) {
+          selectedProducts.push(checkbox.value);
+        } else {
+          const index = selectedProducts.indexOf(checkbox.value);
+          if (index > -1) {
+            selectedProducts.splice(index, 1);
+          }
+          document.getElementById("selectAll").checked = false;
+        }
+        updateDeleteButton();
+      }
+
+      // Update delete selected button visibility
+      function updateDeleteButton() {
+        const deleteBtn = document.getElementById("deleteSelectedBtn");
+        if (selectedProducts.length > 0) {
+          deleteBtn.style.display = "block";
+          deleteBtn.innerHTML = `<i class="fas fa-trash"></i> Delete Selected (${selectedProducts.length})`;
+        } else {
+          deleteBtn.style.display = "none";
+        }
+      }
+
+      // Show delete confirmation modal
+      function showDeleteModal(productIds) {
+        selectedProducts = Array.isArray(productIds)
+          ? productIds
+          : [productIds];
+        const message =
+          selectedProducts.length === 1
+            ? "Are you sure you want to delete this product?"
+            : `Are you sure you want to delete ${selectedProducts.length} selected products?`;
+
+        document.getElementById("deleteMessage").textContent = message;
+        document.getElementById("deleteModal").style.display = "flex";
+      }
+
+      // Confirm delete
+      async function confirmDelete() {
+        try {
+          const token = localStorage.getItem("token");
+
+          if (selectedProducts.length === 1) {
+            // Delete single product
+            await axios.delete(`/api/products/${selectedProducts[0]}`, {});
+          } else {
+            // Delete multiple products
+            await axios.post("/api/products/bulk-delete", {
+              productIds: selectedProducts,
+            });
+          }
+
+          alert(`Successfully deleted ${selectedProducts.length} product(s)`);
+          closeDeleteModal();
+          loadProducts(); // Refresh list
+          selectedProducts = [];
+          updateDeleteButton();
+        } catch (error) {
+          console.error("Error deleting products:", error);
+          alert(
+            "Error deleting products: " +
+              (error.response?.data?.message || error.message),
+          );
+        }
+      }
+
+      // Close modals
+      function closeModal() {
+        document.getElementById("productModal").style.display = "none";
+      }
+
+      function closeDeleteModal() {
+        document.getElementById("deleteModal").style.display = "none";
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function (event) {
+        if (event.target.classList.contains("modal")) {
+          closeModal();
+          closeDeleteModal();
+        }
+      };
+    </script>
+  </body>
+</html>
