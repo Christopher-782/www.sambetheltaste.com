@@ -242,7 +242,7 @@ function updateCartDisplay() {
   });
 
   // Calculate totals in Naira
-  const deliveryFee = subtotal > 100000 ? 0 : 1500; // Free delivery over ₦10,000
+  const deliveryFee = subtotal > 100000 ? 0 : 2500; // Free delivery over ₦10,000
   const tax = subtotal * 0.075; // 7.5% VAT
   const total = subtotal + deliveryFee + tax;
 
