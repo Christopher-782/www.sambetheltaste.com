@@ -98,7 +98,6 @@
         <input id="username" type="text" placeholder="Username" required />
         <input id="password" type="password" placeholder="Password" required />
         <button type="submit">Login</button>
-        <a class="register" href="adminregistration.html">Register New Admin</a>
       </form>
       <div class="footer">&copy; 2026 Sambethel Taste</div>
     </div>
@@ -116,26 +115,13 @@
           alert("Please enter both username and password");
           return;
         }
-
-        try {
-          // Make request to your backend login endpoint
-          const res = await axios.post("/login/admin", {
-            username,
-            password,
-          });
-
-          // The backend should return { token: "JWT_TOKEN_HERE" }
-          const token = res.data.token;
-          if (!token) throw new Error("No token received from server");
-
-          // Save the token in localStorage
-          localStorage.setItem("token", token);
-
-          // Redirect to dashboard
+        if (username === "chris" && password === "chris123") {
           window.location.href = "adminDashboard.html";
-        } catch (err) {
-          console.error("Login failed:", err);
-          alert("Invalid username or password");
+          loadOrders();
+          setupCharts();
+        } else {
+          console.log("Failed to login");
+          alert("Invalid credentials");
         }
       });
     </script>
