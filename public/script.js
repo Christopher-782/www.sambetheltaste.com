@@ -1,25 +1,3 @@
-const loginform = document.getElementById("loginform");
-
-loginform.addEventListener("submit", async function (event) {
-  event.preventDefault();
-
-  const username = document.getElementById("username").value.trim();
-  const password = document.getElementById("password").value.trim();
-
-  if (!username || !password) {
-    alert("Please enter both username and password");
-    return;
-  }
-  if (username === "chris" && password === "chris123") {
-    window.location.href = "adminDashboard.html";
-    loadOrders();
-    setupCharts();
-  } else {
-    console.log("Failed to login");
-    alert("Invalid credentials");
-  }
-});
-
 // ====== ELEMENTS ======
 const loadOrdersBtn = document.getElementById("loadOrdersBtn");
 const ordersTableBody = document.getElementById("ordersTableBody");
