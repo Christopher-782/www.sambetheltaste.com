@@ -11,6 +11,9 @@ const loginRouter = require("./router/login");
 const adminrouter = require("./router/adminOrder");
 const authMiddleware = require("./middleware/authmiddleware");
 const adminRouter = require("./router/adminuser");
+const customOrderRouter = require("./router/customOrder");
+const cors = require("cors");
+
 mongoose
   .connect(process.env.MONGO)
   .then(() => {
@@ -22,6 +25,7 @@ mongoose
 
 app.use(express.json());
 app.use(express.static("public"));
+app.use(cors());
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "login.html"));
@@ -30,6 +34,7 @@ app.use("/", userRouter);
 app.use("/", loginRouter);
 app.use("/", productRoutes);
 app.use("/orders", orderRoutes);
+app.use("/", customOrderRouter);
 app.use("/", adminrouter);
 
 app.listen(process.env.PORT, () => {

@@ -505,3 +505,18 @@ function setupEventListeners() {
 Number.prototype.toNairaString = function () {
   return "₦" + this.toLocaleString("en-NG");
 };
+
+// Menu toogle
+document.addEventListener("DOMContentLoaded", function () {
+  const menuToggle = document.getElementById("menuToggle");
+  const storeNav = document.getElementById("categories");
+
+  menuToggle.addEventListener("click", function () {
+    storeNav.classList.toggle("active");
+
+    // Change icon
+    const icon = menuToggle.querySelector("i");
+    icon.classList.toggle("fa-bars");
+    icon.classList.toggle("fa-times");
+  });
+});

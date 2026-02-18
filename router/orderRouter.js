@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 const Order = require("../models/orders");
 const auth = require("../middleware/authmiddleware"); // must set req.user
+const customorderController = require("../controllers/customerordercontroller");
 
 // POST /orders - place a new order
 router.post("/", auth, async (req, res) => {

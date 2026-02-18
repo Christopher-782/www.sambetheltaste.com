@@ -1,0 +1,392 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Orders | Admin Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: "#eff6ff",
+                500: "#3b82f6",
+                600: "#2563eb",
+                700: "#1d4ed8",
+              },
+              slate: { 850: "#1e293b" },
+            },
+          },
+        },
+      };
+    </script>
+  </head>
+  <body class="bg-slate-50 min-h-screen">
+    <!-- Top Navigation -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-10">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between h-16 items-center">
+          <div class="flex items-center gap-3">
+            <div
+              class="w-8 h-8 bg-primary-600 rounded-lg flex items-center justify-center"
+            >
+              <svg
+                class="w-5 h-5 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+                />
+              </svg>
+            </div>
+            <span class="font-semibold text-slate-900">Admin Portal</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <button
+              onclick="loadOrders()"
+              class="p-2 text-slate-500 hover:text-primary-600 transition-colors"
+              title="Refresh"
+            >
+              <svg
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                />
+              </svg>
+            </button>
+            <div class="w-8 h-8 bg-slate-200 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <!-- Header Section -->
+      <div
+        class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6"
+      >
+        <div>
+          <h1 class="text-2xl font-bold text-slate-900">Customer Orders</h1>
+          <p class="text-slate-500 mt-1" id="orderCount">Loading orders...</p>
+        </div>
+        <div class="flex gap-3">
+          <div class="relative">
+            <input
+              type="text"
+              id="searchInput"
+              placeholder="Search orders..."
+              class="pl-10 pr-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 w-64"
+            />
+            <svg
+              class="w-5 h-5 text-slate-400 absolute left-3 top-2.5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+              />
+            </svg>
+          </div>
+          <select
+            id="sortSelect"
+            class="px-4 py-2 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-primary-500"
+          >
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Loading State -->
+      <div id="loadingState" class="hidden">
+        <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          ${[...Array(6)].map(() => `
+          <div
+            class="bg-white p-6 rounded-xl border border-slate-200 animate-pulse"
+          >
+            <div class="h-5 bg-slate-200 rounded w-3/4 mb-4"></div>
+            <div class="h-4 bg-slate-200 rounded w-1/2 mb-2"></div>
+            <div class="h-4 bg-slate-200 rounded w-2/3 mb-4"></div>
+            <div class="h-3 bg-slate-200 rounded w-1/4"></div>
+          </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <!-- Error State -->
+      <div id="errorState" class="hidden text-center py-16">
+        <div
+          class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <svg
+            class="w-8 h-8 text-red-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900">
+          Failed to load orders
+        </h3>
+        <p class="text-slate-500 mt-1 mb-4">
+          Please check your connection and try again.
+        </p>
+        <button
+          onclick="loadOrders()"
+          class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+        >
+          Retry
+        </button>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="hidden text-center py-16">
+        <div
+          class="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4"
+        >
+          <svg
+            class="w-8 h-8 text-slate-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+            />
+          </svg>
+        </div>
+        <h3 class="text-lg font-semibold text-slate-900">No orders found</h3>
+        <p class="text-slate-500 mt-1">
+          New orders will appear here when customers place them.
+        </p>
+      </div>
+
+      <!-- Orders Grid -->
+      <div
+        id="ordersContainer"
+        class="grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+      ></div>
+    </main>
+
+    <!-- Toast Notification -->
+    <div
+      id="toast"
+      class="fixed bottom-4 right-4 transform translate-y-20 opacity-0 transition-all duration-300 z-50"
+    >
+      <div
+        class="bg-slate-850 text-white px-4 py-3 rounded-lg shadow-lg flex items-center gap-3"
+      >
+        <svg
+          class="w-5 h-5 text-green-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M5 13l4 4L19 7"
+          />
+        </svg>
+        <span id="toastMessage">Action completed</span>
+      </div>
+    </div>
+
+    <script>
+      let allOrders = [];
+      const processedOrders = new Set();
+
+      document.addEventListener("DOMContentLoaded", fetchOrders);
+
+      async function fetchOrders() {
+        try {
+          const response = await axios.get("/customorders");
+
+          allOrders = response.data.data || response.data;
+
+          renderOrders(allOrders);
+          updateOrderCount();
+        } catch (error) {
+          console.error("Error fetching orders:", error);
+          showErrorState();
+        }
+      }
+
+      function renderOrders(orders) {
+        const ordersGrid = document.getElementById("ordersContainer"); // ✅ fixed ID
+
+        if (!orders || orders.length === 0) {
+          ordersGrid.innerHTML = `
+      <div class="col-span-full text-center py-16">
+        <div class="w-24 h-24 mx-auto mb-6 bg-slate-100 rounded-full flex items-center justify-center">
+          <span class="text-4xl">📦</span>
+        </div>
+        <h3 class="text-xl font-semibold text-slate-900 mb-2">No orders yet</h3>
+        <p class="text-slate-500">Orders will appear here when customers submit them.</p>
+      </div>
+    `;
+          return;
+        }
+
+        ordersGrid.innerHTML = orders
+          .map((order) => {
+            const isProcessed = processedOrders.has(order._id);
+
+            return `
+        <article id="order-${order._id}"
+          class="rounded-xl border shadow-sm hover:shadow-md transition-all duration-300
+          ${isProcessed ? "bg-green-50 border-green-200" : "bg-white border-slate-200"}">
+
+          <div class="p-6">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex items-center space-x-3">
+                <div class="w-12 h-12 ${
+                  isProcessed ? "bg-green-100" : "bg-emerald-100"
+                } rounded-full flex items-center justify-center">
+                  <span class="text-lg">👤</span>
+                </div>
+                <div>
+                  <h3 class="font-semibold text-slate-900">${order.name}</h3>
+                  <p class="text-sm text-slate-500">#${order._id.slice(-6)}</p>
+                </div>
+              </div>
+
+              <span class="px-2.5 py-1 text-xs font-medium rounded-full ${
+                isProcessed
+                  ? "bg-green-100 text-green-700"
+                  : "bg-blue-50 text-blue-700"
+              }">
+                ${isProcessed ? "Processed" : "New"}
+              </span>
+            </div>
+
+            <div class="space-y-3 mb-4">
+              <div class="flex items-center space-x-2 text-sm text-slate-600">
+                <span>📞</span>
+                <span>${order.phoneNumber}</span>
+              </div>
+              <div class="flex items-start space-x-2 text-sm text-slate-600">
+                <span>📝</span>
+                <p class="flex-1">${order.order}</p>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-4 border-t border-slate-100">
+              <span class="text-xs text-slate-400">
+                ${new Date(order.createdAt).toLocaleDateString()}
+              </span>
+
+              <div class="flex items-center space-x-2">
+                <button
+                  onclick="copyOrder('${order._id}')"
+                  class="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
+                >
+                  📋
+                </button>
+
+                <button
+                  onclick="markProcessed('${order._id}')"
+                  ${isProcessed ? "disabled" : ""}
+                  class="p-2 rounded-lg transition-colors ${
+                    isProcessed
+                      ? "text-green-600 bg-green-100 cursor-not-allowed"
+                      : "text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                  }"
+                >
+                  ✔
+                </button>
+              </div>
+            </div>
+          </div>
+        </article>
+      `;
+          })
+          .join("");
+
+        updateOrderCount();
+      }
+
+      function updateOrderCount() {
+        const total = allOrders.length;
+        const processed = allOrders.filter((o) =>
+          processedOrders.has(o._id),
+        ).length;
+
+        document.getElementById("orderCount").textContent =
+          total === 0
+            ? "No orders"
+            : `${total} order${total !== 1 ? "s" : ""} • ${processed} processed`;
+      }
+
+      function copyOrder(id) {
+        const order = allOrders.find((o) => o._id === id);
+        if (!order) return;
+
+        const text = `
+Order from ${order.name}
+Phone: ${order.phoneNumber}
+Request: ${order.order}
+Date: ${new Date(order.createdAt).toLocaleDateString()}
+  `;
+
+        navigator.clipboard.writeText(text.trim());
+        showToast("Order details copied");
+      }
+
+      function markProcessed(id) {
+        processedOrders.add(id);
+        renderOrders(allOrders);
+        showToast("Marked as processed");
+      }
+
+      function showToast(message) {
+        const toast = document.createElement("div");
+        toast.className =
+          "fixed bottom-6 right-6 bg-slate-900 text-white px-4 py-3 rounded-lg shadow-lg z-50 transition-opacity duration-300";
+        toast.textContent = message;
+
+        document.body.appendChild(toast);
+
+        setTimeout(() => {
+          toast.style.opacity = "0";
+          setTimeout(() => toast.remove(), 300);
+        }, 2000);
+      }
+
+      function showErrorState() {
+        document.getElementById("errorState").classList.remove("hidden");
+        document.getElementById("ordersContainer").innerHTML = "";
+      }
+    </script>
+  </body>
+</html>

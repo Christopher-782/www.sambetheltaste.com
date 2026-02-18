@@ -21,8 +21,8 @@
           height="100px"
           width="100px"
         />
-        <!-- <h1>Sambethel <span>Taste</span></h1> -->
       </a>
+
       <a href="login.html" class="logoutBtn" id="logoutBtn">
         <i class="fas fa-sign-out-alt"></i>
         <span class="menu-text">Logout</span>
@@ -44,6 +44,10 @@
       <!-- Left Side - Products -->
       <section class="products-section">
         <h1 class="page-title">Our Bakery Products</h1>
+
+        <div class="menu-toggle" id="menuToggle">
+          <i class="fas fa-bars"></i>
+        </div>
 
         <!-- Category Filter -->
         <div class="categories" id="categories">
@@ -68,9 +72,7 @@
         </div>
 
         <!-- Product Grid -->
-        <div id="product-list" class="product-grid">
-          <!-- Products will be dynamically inserted here -->
-        </div>
+        <div id="product-list" class="product-grid"></div>
       </section>
 
       <!-- Right Side - Cart -->
